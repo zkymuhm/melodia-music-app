@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../models/song.dart';
 import '../services/favorite_service.dart';
+import '../services/pengaturan_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass.dart';
 import '../widgets/song_tile.dart';
-import 'detail_page.dart';
+import 'now_playing_page.dart';
 
 /// Halaman akun. Proses masuk (login) belum tersedia, sehingga halaman ini
 /// menampilkan profil tamu beserta data favorit yang tersimpan di perangkat.
@@ -39,7 +40,9 @@ class _AccountPageState extends State<AccountPage> {
 
   void _muatUlang() {
     if (!mounted) return;
-    setState(() => _futureFavorit = _layanan.ambilSemua());
+    setState(() {
+      _futureFavorit = _layanan.ambilSemua();
+    });
   }
 
   void _belumTersedia(String fitur) {
@@ -149,7 +152,7 @@ class _AccountPageState extends State<AccountPage> {
                           Expanded(
                             child: Text(
                               'Belum ada lagu favorit. Tandai lagu lewat '
-                              'ikon hati di halaman detail.',
+                              'ikon hati di halaman pemutar.',
                               style: teks.bodySmall,
                             ),
                           ),
@@ -164,15 +167,11 @@ class _AccountPageState extends State<AccountPage> {
                             .take(5)
                             .map((lagu) => SongTile(
                                   lagu: lagu,
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => DetailPage(lagu: lagu),
-                                      ),
-                                    );
-                                    _muatUlang();
-                                  },
+                                  onTap: () => NowPlayingPage.putar(
+                                    context,
+                                    lagu,
+                                    antrean: favorit,
+                                  ),
                                 ))
                             .toList(),
                       ),
@@ -189,6 +188,20 @@ class _AccountPageState extends State<AccountPage> {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Column(
               children: [
+                // Sakelar latar aurora bergerak; tersimpan di perangkat.
+                ValueListenableBuilder<bool>(
+                  valueListenable: latarBergerak,
+                  builder: (context, aktif, _) => SwitchListTile(
+                    value: aktif,
+                    onChanged: PengaturanService.aturLatarBergerak,
+                    activeColor: AppTheme.aksen,
+                    secondary: const Icon(Icons.blur_on_rounded,
+                        color: Colors.white70, size: 21),
+                    title: Text('Latar Bergerak',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    subtitle: const Text('Matikan untuk menghemat baterai'),
+                  ),
+                ),
                 _BarisMenu(
                   ikon: Icons.notifications_rounded,
                   judul: 'Notifikasi',
@@ -209,8 +222,9 @@ class _AccountPageState extends State<AccountPage> {
                     applicationVersion: '1.0.0',
                     children: const [
                       Text(
-                        'Aplikasi penjelajah musik yang menyajikan data dari '
-                        'iTunes Search API dan lirik dari lyrics.ovh.',
+                        'Aplikasi pemutar musik yang menyajikan data dari '
+                        'iTunes Search API, musik indie dari Audius, dan '
+                        'lirik dari lyrics.ovh.',
                       ),
                     ],
                   ),
@@ -247,8 +261,7 @@ class _KartuAngka extends StatelessWidget {
         children: [
           Icon(ikon, color: AppTheme.aksen, size: 20),
           const SizedBox(height: 10),
-          Text(nilai,
-              style: teks.headlineLarge?.copyWith(fontSize: 26)),
+          Text(nilai, style: teks.headlineLarge?.copyWith(fontSize: 26)),
           const SizedBox(height: 2),
           Text(label, style: teks.bodySmall),
         ],

@@ -47,6 +47,8 @@ class SongTile extends StatelessWidget {
                     : Image.network(
                         lagu.artworkKecil!,
                         fit: BoxFit.cover,
+                        // Di-decode sesuai ukuran tampil agar daftar ringan.
+                        cacheWidth: 150,
                         errorBuilder: (_, __, ___) => const ColoredBox(
                           color: Color(0xFF1C1C22),
                           child: Icon(Icons.music_note_rounded,

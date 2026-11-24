@@ -32,6 +32,11 @@ class Song {
   final String releaseDate;
   final SumberLagu sumber;
 
+  /// Id penyanyi pada penyedia data (artistId di iTunes, id pengguna di
+  /// Audius). Dipakai untuk membuka halaman artis. Bisa null pada lagu
+  /// favorit lama yang tersimpan sebelum versi UAS.
+  final String? idArtis;
+
   const Song({
     required this.id,
     required this.trackName,
@@ -44,6 +49,7 @@ class Song {
     required this.durasiDetik,
     required this.releaseDate,
     required this.sumber,
+    this.idArtis,
   });
 
   /// Mengubah satu objek lagu dari iTunes Search API menjadi objek Dart.
@@ -61,6 +67,7 @@ class Song {
       durasiDetik: ((json['trackTimeMillis'] as num?) ?? 0) ~/ 1000,
       releaseDate: json['releaseDate'] as String? ?? '',
       sumber: SumberLagu.itunes,
+      idArtis: json['artistId']?.toString(),
     );
   }
 
@@ -86,6 +93,7 @@ class Song {
       durasiDetik: (json['duration'] as num?)?.toInt() ?? 0,
       releaseDate: json['release_date'] as String? ?? '',
       sumber: SumberLagu.audius,
+      idArtis: pengguna?['id'] as String?,
     );
   }
 
@@ -102,9 +110,9 @@ class Song {
       urlAudio: json['urlAudio'] as String?,
       durasiDetik: (json['durasiDetik'] as num?)?.toInt() ?? 0,
       releaseDate: json['releaseDate'] as String? ?? '',
-      sumber: json['sumber'] == 'audius'
-          ? SumberLagu.audius
-          : SumberLagu.itunes,
+      sumber:
+          json['sumber'] == 'audius' ? SumberLagu.audius : SumberLagu.itunes,
+      idArtis: json['idArtis'] as String?,
     );
   }
 
@@ -121,6 +129,7 @@ class Song {
         'durasiDetik': durasiDetik,
         'releaseDate': releaseDate,
         'sumber': sumber == SumberLagu.audius ? 'audius' : 'itunes',
+        'idArtis': idArtis,
       };
 
   /// Menyusun alamat pemutaran lagu Audius berdasarkan id lagu.
@@ -132,9 +141,8 @@ class Song {
   bool get dapatDiputarPenuh => sumber == SumberLagu.audius;
 
   /// Keterangan singkat mengenai asal dan batasan pemutaran lagu.
-  String get keteranganSumber => dapatDiputarPenuh
-      ? 'Lagu penuh — Audius'
-      : 'Pratinjau 30 detik — iTunes';
+  String get keteranganSumber =>
+      dapatDiputarPenuh ? 'Lagu penuh — Audius' : 'Pratinjau 30 detik — iTunes';
 
   /// Durasi lagu dalam format mm:ss.
   String get durasi {

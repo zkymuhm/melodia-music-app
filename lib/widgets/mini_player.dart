@@ -3,11 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../pages/now_playing_page.dart';
 import '../services/player_controller.dart';
 import '../theme/app_theme.dart';
 
 /// Bar pemutar yang menempel di bagian bawah layar: garis kemajuan tipis,
-/// sampul album, judul lagu, nama artis, dan tombol putar/jeda.
+/// sampul album, judul lagu, nama artis, tombol putar/jeda, dan tombol lagu
+/// berikutnya. Mengetuk bar membuka halaman pemutar layar penuh.
 ///
 /// Bentuknya sengaja dibuat rata tanpa sudut membulat agar menyatu dengan
 /// bilah navigasi di bawahnya.
@@ -40,61 +42,74 @@ class MiniPlayer extends StatelessWidget {
                   // pemutar memberi notifikasi, sehingga tampilannya membeku.
                   // ignore: prefer_const_constructors
                   _GarisKemajuan(),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: SizedBox(
-                            width: 42,
-                            height: 42,
-                            child: lagu.artworkKecil == null
-                                ? const ColoredBox(
-                                    color: Color(0xFF1C1C22),
-                                    child: Icon(Icons.music_note_rounded,
-                                        size: 18, color: Colors.white24),
-                                  )
-                                : Image.network(
-                                    lagu.artworkKecil!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
-                                        const ColoredBox(
+                  // Mengetuk bar membuka halaman pemutar layar penuh.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => NowPlayingPage.buka(context),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: SizedBox(
+                              width: 42,
+                              height: 42,
+                              child: lagu.artworkKecil == null
+                                  ? const ColoredBox(
                                       color: Color(0xFF1C1C22),
                                       child: Icon(Icons.music_note_rounded,
                                           size: 18, color: Colors.white24),
+                                    )
+                                  : Image.network(
+                                      lagu.artworkKecil!,
+                                      fit: BoxFit.cover,
+                                      cacheWidth: 150,
+                                      errorBuilder: (_, __, ___) =>
+                                          const ColoredBox(
+                                        color: Color(0xFF1C1C22),
+                                        child: Icon(Icons.music_note_rounded,
+                                            size: 18, color: Colors.white24),
+                                      ),
                                     ),
-                                  ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 11),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                lagu.trackName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: teks.titleMedium,
-                              ),
-                              Text(
-                                pemutarGlobal.galat ?? '${lagu.artistName} · ${lagu.keteranganSumber}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: teks.bodySmall?.copyWith(
-                                  color: pemutarGlobal.galat != null
-                                      ? Theme.of(context).colorScheme.error
-                                      : null,
+                          const SizedBox(width: 11),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  lagu.trackName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: teks.titleMedium,
                                 ),
-                              ),
-                            ],
+                                Text(
+                                  pemutarGlobal.galat ??
+                                      '${lagu.artistName} · ${lagu.keteranganSumber}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: teks.bodySmall?.copyWith(
+                                    color: pemutarGlobal.galat != null
+                                        ? Theme.of(context).colorScheme.error
+                                        : null,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        // ignore: prefer_const_constructors
-                        _TombolPutar(),
-                      ],
+                          // ignore: prefer_const_constructors
+                          _TombolPutar(),
+                          IconButton(
+                            tooltip: 'Berikutnya',
+                            onPressed: pemutarGlobal.berikutnya,
+                            icon: const Icon(Icons.skip_next_rounded,
+                                color: Colors.white),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -113,12 +128,13 @@ class _GarisKemajuan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total = pemutarGlobal.pemutar.duration ?? Duration.zero;
-
     return StreamBuilder<Duration>(
       stream: pemutarGlobal.pemutar.positionStream,
       initialData: pemutarGlobal.pemutar.position,
       builder: (context, snapshot) {
+        // Durasi dibaca di sini karena baru diketahui setelah lagu dimuat,
+        // dan bisa berubah ketika antrean berpindah ke lagu berikutnya.
+        final total = pemutarGlobal.pemutar.duration ?? Duration.zero;
         final posisi = snapshot.data ?? Duration.zero;
         final rasio = total.inMilliseconds == 0
             ? 0.0

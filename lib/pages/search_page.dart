@@ -7,7 +7,7 @@ import '../services/music_api_service.dart';
 import '../widgets/glass.dart';
 import '../widgets/song_tile.dart';
 import '../widgets/state_views.dart';
-import 'detail_page.dart';
+import 'now_playing_page.dart';
 
 /// Halaman pencarian lagu berdasarkan judul, artis, atau album.
 class SearchPage extends StatefulWidget {
@@ -169,11 +169,10 @@ class _SearchPageState extends State<SearchPage> {
           itemBuilder: (context, index) => SongTile(
             lagu: hasil[index],
             nomor: index + 1,
-            onTap: () => Navigator.push(
+            onTap: () => NowPlayingPage.putar(
               context,
-              MaterialPageRoute(
-                builder: (_) => DetailPage(lagu: hasil[index]),
-              ),
+              hasil[index],
+              antrean: hasil,
             ),
           ),
         );

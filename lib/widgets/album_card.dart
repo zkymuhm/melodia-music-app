@@ -61,6 +61,9 @@ class AlbumCard extends StatelessWidget {
     return Image.network(
       url,
       fit: BoxFit.cover,
+      // Sampul asli berukuran hingga 600 px, padahal kartu hanya ±140 px.
+      // Men-decode sesuai ukuran tampil membuat guliran jauh lebih ringan.
+      cacheWidth: 360,
       errorBuilder: (_, __, ___) => const _SampulKosong(),
       loadingBuilder: (context, child, progress) =>
           progress == null ? child : const _SampulKosong(),

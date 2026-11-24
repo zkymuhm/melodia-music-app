@@ -2,12 +2,14 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../services/pengaturan_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass.dart';
 import '../widgets/mini_player.dart';
 import 'account_page.dart';
 import 'dashboard_page.dart';
 import 'indie_page.dart';
+import 'playlist_page.dart';
 import 'search_page.dart';
 
 /// Kerangka utama aplikasi: latar aurora, isi halaman, dan bilah navigasi
@@ -31,14 +33,27 @@ class _RootPageState extends State<RootPage> {
       body: Stack(
         children: [
           const AuroraBackground(),
-          IndexedStack(
-            index: _indeks,
-            children: const [
-              DashboardPage(),
-              IndiePage(),
-              SearchPage(),
-              AccountPage(),
-            ],
+          // Memantau guliran di semua halaman tab agar aurora dapat berhenti
+          // sementara selama pengguna menggulir.
+          NotificationListener<ScrollNotification>(
+            onNotification: (notifikasi) {
+              if (notifikasi is ScrollStartNotification) {
+                sedangMenggulir.value = true;
+              } else if (notifikasi is ScrollEndNotification) {
+                sedangMenggulir.value = false;
+              }
+              return false;
+            },
+            child: IndexedStack(
+              index: _indeks,
+              children: const [
+                DashboardPage(),
+                IndiePage(),
+                SearchPage(),
+                PlaylistPage(),
+                AccountPage(),
+              ],
+            ),
           ),
         ],
       ),
@@ -67,6 +82,7 @@ class _BilahKaca extends StatelessWidget {
     (ikon: Icons.play_circle_fill_rounded, label: 'Dashboard'),
     (ikon: Icons.all_inclusive_rounded, label: 'Indie'),
     (ikon: Icons.search_rounded, label: 'Cari'),
+    (ikon: Icons.queue_music_rounded, label: 'Playlist'),
     (ikon: Icons.person_rounded, label: 'Akun'),
   ];
 
